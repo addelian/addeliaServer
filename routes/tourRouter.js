@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const Tour = require('../models/tour');
+const authenticate = require('../authenticate');
 
 const tourRouter = express.Router();
 
@@ -16,7 +17,7 @@ tourRouter.route('/')
     })
     .catch(err => next(err));
 })
-.post((req, res, next) => {
+.post(authenticate.verifyUser, (req, res, next) => {
     Tour.create(req.body)
     .then(tour => {
         console.log('Tour Date Created ', tour);
@@ -26,11 +27,11 @@ tourRouter.route('/')
     })
     .catch(err => next(err));
 })
-.put((req, res) => {
+.put(authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
     res.end('PUT operation not supported on /tour');
 })
-.delete((req, res, next) => {
+.delete(authenticate.verifyUser, (req, res, next) => {
     Tour.deleteMany()
     .then(response => {
         res.statusCode = 200;
@@ -50,11 +51,11 @@ tourRouter.route('/:tourId')
     })
     .catch(err => next(err));
 })
-.post((req, res) => {
+.post(authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /tour/${req.params.tourId}`);
 })
-.put((req, res, next) => {
+.put(authenticate.verifyUser, (req, res, next) => {
     Tour.findByIdAndUpdate(req.params.tourId, {
         $set: req.body
     }, { new: true })
@@ -65,7 +66,7 @@ tourRouter.route('/:tourId')
     })
     .catch(err => next(err));
 })
-.delete((req, res, next) => {
+.delete(authenticate.verifyUser, (req, res, next) => {
     Tour.findByIdAndDelete(req.params.tourId)
     .then(response => {
         res.statusCode = 200;

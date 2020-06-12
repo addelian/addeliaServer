@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const Article = require('../models/article');
 
+const authenticate = require('../authenticate');
+
 const articleRouter = express.Router();
 
 articleRouter.use(bodyParser.json());
@@ -16,7 +18,7 @@ articleRouter.route('/')
     })
     .catch(err => next(err));
 })
-.post((req, res, next) => {
+.post(authenticate.verifyUser, (req, res, next) => {
     Article.create(req.body)
     .then(article => {
         console.log('Article Created ', article);
@@ -26,11 +28,11 @@ articleRouter.route('/')
     })
     .catch(err => next(err));
 })
-.put((req, res) => {
+.put(authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
     res.end('PUT operation not supported on /articles');
 })
-.delete((req, res, next) => {
+.delete(authenticate.verifyUser, (req, res, next) => {
     Article.deleteMany()
     .then(response => {
         res.statusCode = 200;
@@ -50,11 +52,11 @@ articleRouter.route('/:articleId')
     })
     .catch(err => next(err));
 })
-.post((req, res) => {
+.post(authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /articles/${req.params.articleId}`);
 })
-.put((req, res, next) => {
+.put(authenticate.verifyUser, (req, res, next) => {
     Article.findByIdAndUpdate(req.params.articleId, {
         $set: req.body
     }, { new: true })
@@ -65,7 +67,7 @@ articleRouter.route('/:articleId')
     })
     .catch(err => next(err));
 })
-.delete((req, res, next) => {
+.delete(authenticate.verifyUser, (req, res, next) => {
     Article.findByIdAndDelete(req.params.articleId)
     .then(response => {
         res.statusCode = 200;
@@ -91,7 +93,7 @@ articleRouter.route('/:articleId/comments')
     })
     .catch(err => next(err));
 })
-.post((req, res, next) => {
+.post(authenticate.verifyUser, (req, res, next) => {
     Article.findById(req.params.articleId)
     .then(article => {
         if (article) {
@@ -111,11 +113,11 @@ articleRouter.route('/:articleId/comments')
     })
     .catch(err => next(err));
 })
-.put((req, res) => {
+.put(authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
     res.end(`PUT operation not supported on /articles/${req.params.articleId}/comments`);
 })
-.delete((req, res, next) => {
+.delete(authenticate.verifyUser, (req, res, next) => {
     Article.findById(req.params.articleId)
     .then(article => {
         if (article) {
@@ -158,11 +160,11 @@ articleRouter.route('/:articleId/comments/:commentId')
     })
     .catch(err => next(err));
 })
-.post((req, res) => {
+.post(authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /articles/${req.params.articleId}/comments/${req.params.commentId}`);
 })
-.put((req, res, next) => {
+.put(authenticate.verifyUser, (req, res, next) => {
     Article.findById(req.params.articleId)
     .then(article => {
         if (article && article.comments.id(req.params.commentId)) {
@@ -191,7 +193,7 @@ articleRouter.route('/:articleId/comments/:commentId')
     })
     .catch(err => next(err));
 })
-.delete((req, res, next) => {
+.delete(authenticate.verifyUser, (req, res, next) => {
     Article.findById(req.params.articleId)
     .then(article => {
         if (article && article.comments.id(req.params.commentId)) {
