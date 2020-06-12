@@ -11,6 +11,7 @@ articleRouter.use(bodyParser.json());
 articleRouter.route('/')
 .get((req, res, next) => {
     Article.find()
+    .populate('comments.author')
     .then(articles => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -45,6 +46,7 @@ articleRouter.route('/')
 articleRouter.route('/:articleId')
 .get((req, res, next) => {
     Article.findById(req.params.articleId)
+    .populate('comments.author')
     .then(article => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -80,6 +82,7 @@ articleRouter.route('/:articleId')
 articleRouter.route('/:articleId/comments')
 .get((req, res, next) => {
     Article.findById(req.params.articleId)
+    .populate('comments.author')
     .then(article => {
         if (article) {
             res.statusCode = 200;
@@ -97,6 +100,7 @@ articleRouter.route('/:articleId/comments')
     Article.findById(req.params.articleId)
     .then(article => {
         if (article) {
+            req.body.author = req.user._id;
             article.comments.push(req.body);
             article.save()
             .then(article => {
@@ -143,6 +147,7 @@ articleRouter.route('/:articleId/comments')
 articleRouter.route('/:articleId/comments/:commentId')
 .get((req, res, next) => {
     Article.findById(req.params.articleId)
+    .populate('comments.author')
     .then(article => {
         if (article && article.comments.id(req.params.commentId)) {
             res.statusCode = 200;
