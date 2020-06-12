@@ -73,7 +73,7 @@ articleRouter.route('/:articleId')
         res.json(response);
     })
     .catch(err => next(err));
-})
+});
 
 articleRouter.route('/:articleId/comments')
 .get((req, res, next) => {
