@@ -19,7 +19,7 @@ articleRouter.route('/')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser, (req, res, next) => {
+.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Article.create(req.body)
     .then(article => {
         console.log('Article Created ', article);
@@ -29,11 +29,11 @@ articleRouter.route('/')
     })
     .catch(err => next(err));
 })
-.put(authenticate.verifyUser, (req, res) => {
+.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end('PUT operation not supported on /articles');
 })
-.delete(authenticate.verifyUser, (req, res, next) => {
+.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Article.deleteMany()
     .then(response => {
         res.statusCode = 200;
@@ -54,11 +54,11 @@ articleRouter.route('/:articleId')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser, (req, res) => {
+.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /articles/${req.params.articleId}`);
 })
-.put(authenticate.verifyUser, (req, res, next) => {
+.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Article.findByIdAndUpdate(req.params.articleId, {
         $set: req.body
     }, { new: true })
@@ -69,7 +69,7 @@ articleRouter.route('/:articleId')
     })
     .catch(err => next(err));
 })
-.delete(authenticate.verifyUser, (req, res, next) => {
+.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Article.findByIdAndDelete(req.params.articleId)
     .then(response => {
         res.statusCode = 200;
@@ -117,11 +117,11 @@ articleRouter.route('/:articleId/comments')
     })
     .catch(err => next(err));
 })
-.put(authenticate.verifyUser, (req, res) => {
+.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`PUT operation not supported on /articles/${req.params.articleId}/comments`);
 })
-.delete(authenticate.verifyUser, (req, res, next) => {
+.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Article.findById(req.params.articleId)
     .then(article => {
         if (article) {
@@ -165,7 +165,7 @@ articleRouter.route('/:articleId/comments/:commentId')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser, (req, res) => {
+.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /articles/${req.params.articleId}/comments/${req.params.commentId}`);
 })
@@ -173,19 +173,22 @@ articleRouter.route('/:articleId/comments/:commentId')
     Article.findById(req.params.articleId)
     .then(article => {
         if (article && article.comments.id(req.params.commentId)) {
-            if (req.body.rating) {
-                article.comments.id(req.params.commentId).rating = req.body.rating;
+            if ((article.comments.id(req.params.commentId).author._id).equals(req.user._id)) {
+                if (req.body.text) {
+                    article.comments.id(req.params.commentId).text = req.body.text;
+                }
+                article.save()
+                .then(article => {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.json(article);
+                })
+                .catch(err => next(err));
+            } else {
+                err = new Error("You cannot update other users' comments!");
+                err.status = 403;
+                return next(err);
             }
-            if (req.body.text) {
-                article.comments.id(req.params.commentId).text = req.body.text;
-            }
-            article.save()
-            .then(article => {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(article);
-            })
-            .catch(err => next(err));
         } else if (!article) {
             err = new Error(`Article ${req.params.articleId} not found`);
             err.status = 404;
