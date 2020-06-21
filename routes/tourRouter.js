@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('./cors');
 const Tour = require('../models/tour');
 const authenticate = require('../authenticate');
 
@@ -8,7 +9,8 @@ const tourRouter = express.Router();
 tourRouter.use(bodyParser.json());
 
 tourRouter.route('/')
-.get((req, res, next) => {
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+.get(cors.cors, (req, res, next) => {
     Tour.find()
     .then(tour => {
         res.statusCode = 200;
@@ -17,7 +19,7 @@ tourRouter.route('/')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Tour.create(req.body)
     .then(tour => {
         console.log('Tour Date Created ', tour);
@@ -27,11 +29,11 @@ tourRouter.route('/')
     })
     .catch(err => next(err));
 })
-.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end('PUT operation not supported on /tour');
 })
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Tour.deleteMany()
     .then(response => {
         res.statusCode = 200;
@@ -42,7 +44,8 @@ tourRouter.route('/')
 });
 
 tourRouter.route('/:tourId')
-.get((req, res, next) => {
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+.get(cors.cors, (req, res, next) => {
     Tour.findById(req.params.tourId)
     .then(tour => {
         res.statusCode = 200;
@@ -51,11 +54,11 @@ tourRouter.route('/:tourId')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /tour/${req.params.tourId}`);
 })
-.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Tour.findByIdAndUpdate(req.params.tourId, {
         $set: req.body
     }, { new: true })
@@ -66,7 +69,7 @@ tourRouter.route('/:tourId')
     })
     .catch(err => next(err));
 })
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Tour.findByIdAndDelete(req.params.tourId)
     .then(response => {
         res.statusCode = 200;
@@ -75,7 +78,5 @@ tourRouter.route('/:tourId')
     })
     .catch(err => next(err));
 });
-
-// Note that delete will only be allowed by admin
 
 module.exports = tourRouter;

@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('./cors');
 const Article = require('../models/article');
 
 const authenticate = require('../authenticate');
@@ -9,7 +10,8 @@ const articleRouter = express.Router();
 articleRouter.use(bodyParser.json());
 
 articleRouter.route('/')
-.get((req, res, next) => {
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+.get(cors.cors, (req, res, next) => {
     Article.find()
     .populate('comments.author')
     .then(articles => {
@@ -19,7 +21,7 @@ articleRouter.route('/')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Article.create(req.body)
     .then(article => {
         console.log('Article Created ', article);
@@ -29,11 +31,11 @@ articleRouter.route('/')
     })
     .catch(err => next(err));
 })
-.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end('PUT operation not supported on /articles');
 })
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Article.deleteMany()
     .then(response => {
         res.statusCode = 200;
@@ -44,7 +46,8 @@ articleRouter.route('/')
 });
 
 articleRouter.route('/:articleId')
-.get((req, res, next) => {
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+.get(cors.cors, (req, res, next) => {
     Article.findById(req.params.articleId)
     .populate('comments.author')
     .then(article => {
@@ -54,11 +57,11 @@ articleRouter.route('/:articleId')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /articles/${req.params.articleId}`);
 })
-.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Article.findByIdAndUpdate(req.params.articleId, {
         $set: req.body
     }, { new: true })
@@ -69,7 +72,7 @@ articleRouter.route('/:articleId')
     })
     .catch(err => next(err));
 })
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Article.findByIdAndDelete(req.params.articleId)
     .then(response => {
         res.statusCode = 200;
@@ -80,7 +83,8 @@ articleRouter.route('/:articleId')
 });
 
 articleRouter.route('/:articleId/comments')
-.get((req, res, next) => {
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+.get(cors.cors, (req, res, next) => {
     Article.findById(req.params.articleId)
     .populate('comments.author')
     .then(article => {
@@ -96,7 +100,7 @@ articleRouter.route('/:articleId/comments')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser, (req, res, next) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Article.findById(req.params.articleId)
     .then(article => {
         if (article) {
@@ -117,11 +121,11 @@ articleRouter.route('/:articleId/comments')
     })
     .catch(err => next(err));
 })
-.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`PUT operation not supported on /articles/${req.params.articleId}/comments`);
 })
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Article.findById(req.params.articleId)
     .then(article => {
         if (article) {
@@ -145,7 +149,8 @@ articleRouter.route('/:articleId/comments')
 });
 
 articleRouter.route('/:articleId/comments/:commentId')
-.get((req, res, next) => {
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+.get(cors.cors, (req, res, next) => {
     Article.findById(req.params.articleId)
     .populate('comments.author')
     .then(article => {
@@ -165,11 +170,11 @@ articleRouter.route('/:articleId/comments/:commentId')
     })
     .catch(err => next(err));
 })
-.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /articles/${req.params.articleId}/comments/${req.params.commentId}`);
 })
-.put(authenticate.verifyUser, (req, res, next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Article.findById(req.params.articleId)
     .then(article => {
         if (article && article.comments.id(req.params.commentId)) {
@@ -201,7 +206,7 @@ articleRouter.route('/:articleId/comments/:commentId')
     })
     .catch(err => next(err));
 })
-.delete(authenticate.verifyUser, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Article.findById(req.params.articleId)
     .then(article => {
         if (article && article.comments.id(req.params.commentId)) {
